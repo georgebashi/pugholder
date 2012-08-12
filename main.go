@@ -14,14 +14,7 @@ type handler struct {
 	files []string
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	err := h.handle(w, req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func (h handler) handle(w http.ResponseWriter, r *http.Request) error {
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	width := vars["width"]
 	height := vars["height"]
@@ -29,7 +22,6 @@ func (h handler) handle(w http.ResponseWriter, r *http.Request) error {
 	hash := fnv.New32a()
 	hash.Write([]byte(width + "/" + height))
 	log.Printf("w %s h %s # %x", width, height, hash.Sum32())
-	return nil
 }
 
 func main() {
