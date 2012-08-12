@@ -2,7 +2,6 @@
 package main
 
 import (
-	"regexp"
 	"net/http"
 	"path/filepath"
 	"log"
@@ -11,37 +10,46 @@ import (
 	"code.google.com/p/gorilla/mux"
 )
 
-var request_regex = regexp.MustCompile("/([0-9]+)/([0-9]+)")
+type handler struct {
+	files []string
+}
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	dims := request_regex.FindStringSubmatch(r.URL.RequestURI())
-	if dims == nil {
-		return
+func (h handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	err := h.handle(w, req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	width := dims[1]
-	height := dims[2]
-	log.Printf("w %s h %s", width, height)
+}
+
+func (h handler) handle(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	width := vars["width"]
+	height := vars["height"]
 
 	hash := fnv.New32a()
 	hash.Write([]byte(width + "/" + height))
-	log.Printf("%x", hash.Sum32())
+	log.Printf("w %s h %s # %x", width, height, hash.Sum32())
+	return nil
 }
 
 func main() {
-	image_paths, err := filepath.Glob("img/*.jpg")
+	files, err := filepath.Glob("img/*.jpg")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	if len(image_paths) == 0 {
+	if len(files) == 0 {
 		log.Fatal("no images found!")
 		return
 	}
 
-	sort.Strings(image_paths)
+	sort.Strings(files)
 
 	r := mux.NewRouter()
-	r.HandleFunc("/{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", handler)
+	h := new(handler)
+	h.files = files
+
+	r.Handle("/{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", h)
 	http.ListenAndServe(":9090", r)
 }
