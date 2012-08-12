@@ -6,7 +6,6 @@ import "C"
 
 import (
 	"unsafe"
-	"fmt"
 )
 func init() {
 	C.MagickWandGenesis()
@@ -30,9 +29,19 @@ func resize(file string, width int, height int) []byte {
 		ratio = r_height
 	}
 
-	C.MagickResizeImage(wand, (C.size_t)(cur_width/ratio), (C.size_t)(cur_height/ratio), C.LanczosFilter, 1)
-	ex := C.MagickGetExceptionType(wand)
-	fmt.Println(ex)
+	dest_width := cur_width / ratio
+	dest_height := cur_height / ratio
+
+	crop_x := int((dest_width - float64(width)) / 2)
+	crop_y := int((dest_height - float64(height)) / 2)
+
+	C.MagickStripImage(wand)
+	if r_width > 5 && r_height > 5 {
+		C.MagickSampleImage(wand, (C.size_t)(dest_width * 5), (C.size_t)(dest_height * 5))
+	}
+	C.MagickResizeImage(wand, (C.size_t)(dest_width), (C.size_t)(dest_height), C.LanczosFilter, 1)
+	C.MagickCropImage(wand, (C.size_t)(width), (C.size_t)(height), (C.ssize_t)(crop_x), (C.ssize_t)(crop_y))
+	C.MagickSetImageCompressionQuality(wand, 65)
 
 	size := 0
 	buf := C.MagickGetImageBlob(wand, (*C.size_t)(unsafe.Pointer(&size)))
