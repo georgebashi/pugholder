@@ -16,17 +16,15 @@ func resize(file string, width int, height int) []byte {
 	defer C.DestroyMagickWand(wand)
 	C.MagickReadImage(wand, C.CString(file))
 
-	cur_width := float64(int(C.MagickGetImageWidth(wand)))
-	cur_height := float64(int(C.MagickGetImageHeight(wand)))
+	cur_width := float64(C.MagickGetImageWidth(wand))
+	cur_height := float64(C.MagickGetImageHeight(wand))
 
-	r_width := float64(cur_width) / float64(width)
-	r_height := float64(cur_height) / float64(height)
+	r_width := cur_width / float64(width)
+	r_height := cur_height / float64(height)
 
-	ratio := 1.0
+	ratio := r_height
 	if r_width < r_height {
 		ratio = r_width
-	} else {
-		ratio = r_height
 	}
 
 	dest_width := cur_width / ratio
