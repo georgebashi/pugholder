@@ -7,13 +7,20 @@ import "C"
 import (
 	"unsafe"
 )
+
+var free_wands = make(chan *C.MagickWand, 10)
+
 func init() {
 	C.MagickWandGenesis()
 }
 
 func resize(file string, width int, height int) []byte {
-	wand := C.NewMagickWand()
-	defer C.DestroyMagickWand(wand)
+	var wand *C.MagickWand
+	select {
+		case wand = <-free_wands:
+		default:
+			wand = C.NewMagickWand()
+	}
 	C.MagickReadImage(wand, C.CString(file))
 
 	cur_width := float64(C.MagickGetImageWidth(wand))
@@ -44,6 +51,13 @@ func resize(file string, width int, height int) []byte {
 	size := 0
 	buf := C.MagickGetImageBlob(wand, (*C.size_t)(unsafe.Pointer(&size)))
 	defer C.MagickRelinquishMemory(unsafe.Pointer(buf))
+
+	C.ClearMagickWand(wand)
+	select {
+		case free_wands <- wand:
+		default:
+			C.DestroyMagickWand(wand)
+	}
 
 	return C.GoBytes(unsafe.Pointer(buf), C.int(size))
 }
