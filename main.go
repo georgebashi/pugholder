@@ -8,6 +8,7 @@ import (
 	"log"
 	"sort"
 	"hash/fnv"
+	"code.google.com/p/gorilla/mux"
 )
 
 var request_regex = regexp.MustCompile("/([0-9]+)/([0-9]+)")
@@ -40,6 +41,7 @@ func main() {
 
 	sort.Strings(image_paths)
 
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":9090", nil)
+	r := mux.NewRouter()
+	r.HandleFunc("/{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", handler)
+	http.ListenAndServe(":9090", r)
 }
