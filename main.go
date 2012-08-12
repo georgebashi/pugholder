@@ -22,6 +22,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hash := fnv.New32a()
 	hash.Write([]byte(width + "/" + height))
 	log.Printf("w %s h %s # %x", width, height, hash.Sum32())
+
+	http.ServeFile(w, r, h.files[hash.Sum32() % uint32(len(h.files))])
 }
 
 func main() {
