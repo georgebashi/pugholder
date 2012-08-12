@@ -8,6 +8,7 @@ import (
 	"sort"
 	"hash/fnv"
 	"code.google.com/p/gorilla/mux"
+	"strconv"
 )
 
 type handler struct {
@@ -16,14 +17,15 @@ type handler struct {
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	width := vars["width"]
-	height := vars["height"]
+	width, _ := strconv.Atoi(vars["width"])
+	height, _ := strconv.Atoi(vars["height"])
 
 	hash := fnv.New32a()
-	hash.Write([]byte(width + "/" + height))
-	log.Printf("w %s h %s # %x", width, height, hash.Sum32())
+	hash.Write([]byte(r.RequestURI))
+	log.Printf("w %d h %d # %x", width, height, hash.Sum32())
 
-	http.ServeFile(w, r, h.files[hash.Sum32() % uint32(len(h.files))])
+	file := h.files[hash.Sum32() % uint32(len(h.files))]
+	w.Write(resize(file, width, height))
 }
 
 func main() {
