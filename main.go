@@ -11,6 +11,7 @@ import (
 	"code.google.com/p/gorilla/mux"
 	"strconv"
 	"fmt"
+	"time"
 )
 
 type handler struct {
@@ -30,10 +31,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		height, _ = strconv.Atoi(vars["height"])
 	}
 
-	hash := fnv.New32a()
-	hash.Write([]byte(fmt.Sprintf("%d/%d", width, height)))
-
-	file := h.files[hash.Sum32() % uint32(len(h.files))]
+	hash := sum([]byte(fmt.Sprintf("%d/%d", width, height)))
+	file := h.files[hash % uint32(len(h.files))]
 
 	img := image.Open(file)
 	defer img.Close()
@@ -43,7 +42,21 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if vars["g"] != "" {
 		img.Grayscale()
 	}
-	w.Write(img.GetBytes())
+
+	out := img.GetBytes()
+
+	hours_in_month, _ := time.ParseDuration("730h")
+	expire := time.Now().Add(hours_in_month)
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Expires", expire.Format(time.RFC1123))
+	w.Header().Set("ETag", fmt.Sprintf("%x", hash))
+	w.Write(out)
+}
+
+func sum(input []byte) uint32 {
+	hash := fnv.New32a()
+	hash.Write(input)
+	return hash.Sum32()
 }
 
 func main() {
