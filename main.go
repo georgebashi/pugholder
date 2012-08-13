@@ -67,6 +67,9 @@ func main() {
 	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", h)
 	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}x{height:[1-9][0-9]*}", h)
 	r.Handle("/{g:[g/]*}{size:[1-9][0-9]*}", h)
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "public/index.html")
+	})
 
 	http.ListenAndServe(":9090", r)
 }
