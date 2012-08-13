@@ -2,6 +2,7 @@
 package main
 
 import (
+	"github.com/georgebashi/pugholder/image"
 	"net/http"
 	"path/filepath"
 	"log"
@@ -24,7 +25,12 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hash.Write([]byte(r.RequestURI))
 
 	file := h.files[hash.Sum32() % uint32(len(h.files))]
-	w.Write(resize(file, width, height))
+
+	img := image.Open(file)
+	defer img.Close()
+	img.Strip()
+	img.Resize(width, height)
+	w.Write(img.GetBytes())
 }
 
 func main() {
