@@ -10,6 +10,7 @@ import (
 	"hash/fnv"
 	"code.google.com/p/gorilla/mux"
 	"strconv"
+	"fmt"
 )
 
 type handler struct {
@@ -18,11 +19,19 @@ type handler struct {
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	width, _ := strconv.Atoi(vars["width"])
-	height, _ := strconv.Atoi(vars["height"])
+
+	var width, height int
+
+	if size, ok := vars["size"]; ok {
+		width, _ = strconv.Atoi(size)
+		height = width
+	} else {
+		width, _ = strconv.Atoi(vars["width"])
+		height, _ = strconv.Atoi(vars["height"])
+	}
 
 	hash := fnv.New32a()
-	hash.Write([]byte(r.RequestURI))
+	hash.Write([]byte(fmt.Sprintf("%d/%d", width, height)))
 
 	file := h.files[hash.Sum32() % uint32(len(h.files))]
 
@@ -56,5 +65,8 @@ func main() {
 	h.files = files
 
 	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", h)
+	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}x{height:[1-9][0-9]*}", h)
+	r.Handle("/{g:[g/]*}{size:[1-9][0-9]*}", h)
+
 	http.ListenAndServe(":9090", r)
 }
