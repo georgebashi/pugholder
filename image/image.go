@@ -54,6 +54,10 @@ func (img *Image) Resize(width int, height int) {
 	C.MagickCropImage(wand, (C.ulong)(width), (C.ulong)(height), (C.long)(crop_x), (C.long)(crop_y))
 }
 
+func (img *Image) Grayscale() {
+	C.MagickQuantizeImage(img.wand, 256, C.GRAYColorspace, 1, 0, 0)
+}
+
 func (img *Image) GetBytes() []byte {
 	size := 0
 	buf := C.MagickWriteImageBlob(img.wand, (*C.size_t)(unsafe.Pointer(&size)))

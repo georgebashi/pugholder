@@ -30,6 +30,10 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer img.Close()
 	img.Strip()
 	img.Resize(width, height)
+
+	if vars["g"] != "" {
+		img.Grayscale()
+	}
 	w.Write(img.GetBytes())
 }
 
@@ -51,6 +55,6 @@ func main() {
 	h := new(handler)
 	h.files = files
 
-	r.Handle("/{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", h)
+	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", h)
 	http.ListenAndServe(":9090", r)
 }
