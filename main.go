@@ -12,10 +12,12 @@ import (
 	"strconv"
 	"fmt"
 	"time"
+	"bytes"
 )
 
 type handler struct {
 	files []string
+	start_time time.Time
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +36,12 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hash := sum([]byte(fmt.Sprintf("%d/%d", width, height)))
 	file := h.files[hash % uint32(len(h.files))]
 
+	etag := fmt.Sprintf("%x", sum([]byte(fmt.Sprintf("%d/%d/%s/%d", width, height, file, h.start_time.Unix()))))
+	if r.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
 	img := image.Open(file)
 	defer img.Close()
 	img.Strip()
@@ -47,10 +55,9 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	hours_in_month, _ := time.ParseDuration("730h")
 	expire := time.Now().Add(hours_in_month)
-	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Expires", expire.Format(time.RFC1123))
-	w.Header().Set("ETag", fmt.Sprintf("%x", hash))
-	w.Write(out)
+	w.Header().Set("ETag", etag)
+	http.ServeContent(w, r, "img.jpg", h.start_time, bytes.NewReader(out))
 }
 
 func sum(input []byte) uint32 {
@@ -76,6 +83,7 @@ func main() {
 	r := mux.NewRouter()
 	h := new(handler)
 	h.files = files
+	h.start_time = time.Now()
 
 	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}/{height:[1-9][0-9]*}", h)
 	r.Handle("/{g:[g/]*}{width:[1-9][0-9]*}x{height:[1-9][0-9]*}", h)
