@@ -59,10 +59,10 @@ func (img *Image) Resize(width int, height int) {
 	crop_y := int((dest_height - float64(height)) / 2)
 
 	if r_width > 5 && r_height > 5 {
-		C.MagickSampleImage(wand, (C.ulong)(dest_width * 5), (C.ulong)(dest_height * 5))
+		C.MagickSampleImage(wand, C.ulong(dest_width * 5), C.ulong(dest_height * 5))
 	}
-	C.MagickResizeImage(wand, (C.ulong)(dest_width), (C.ulong)(dest_height), C.LanczosFilter, 1)
-	C.MagickCropImage(wand, (C.ulong)(width), (C.ulong)(height), (C.long)(crop_x), (C.long)(crop_y))
+	C.MagickResizeImage(wand, C.ulong(dest_width), C.ulong(dest_height), C.LanczosFilter, 1)
+	C.MagickCropImage(wand, C.ulong(width), C.ulong(height), C.long(crop_x), C.long(crop_y))
 }
 
 func (img *Image) Grayscale() {
