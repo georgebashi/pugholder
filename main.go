@@ -37,7 +37,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	file := h.files[hash % uint32(len(h.files))]
 
 	etag := fmt.Sprintf("\"%x\"", sum([]byte(fmt.Sprintf("%d/%d/%s/%d", width, height, file, h.start_time.Unix()))))
-	if r.Header.Get("If-None-Match") == etag {
+	none_match := r.Header.Get("If-None-Match")
+	if none_match == etag || fmt.Sprintf("\"%s\"", none_match) == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
