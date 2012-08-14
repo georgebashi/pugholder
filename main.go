@@ -36,7 +36,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hash := sum([]byte(fmt.Sprintf("%d/%d", width, height)))
 	file := h.files[hash % uint32(len(h.files))]
 
-	etag := fmt.Sprintf("%x", sum([]byte(fmt.Sprintf("%d/%d/%s/%d", width, height, file, h.start_time.Unix()))))
+	etag := fmt.Sprintf("\"%x\"", sum([]byte(fmt.Sprintf("%d/%d/%s/%d", width, height, file, h.start_time.Unix()))))
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return
@@ -54,8 +54,8 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	out := img.GetBytes()
 
 	hours_in_month, _ := time.ParseDuration("730h")
-	expire := time.Now().Add(hours_in_month)
-	w.Header().Set("Expires", expire.Format(time.RFC1123))
+	expire := time.Now().Add(hours_in_month).UTC()
+	w.Header().Set("Expires", expire.Format(http.TimeFormat))
 	w.Header().Set("ETag", etag)
 	http.ServeContent(w, r, "img.jpg", h.start_time, bytes.NewReader(out))
 }
