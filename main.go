@@ -43,8 +43,13 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	img := image.Open(file)
-	defer img.Close()
+	img, err := image.Open(file)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	} else {
+		defer img.Close()
+	}
 	img.Strip()
 	img.Resize(width, height)
 

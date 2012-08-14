@@ -6,17 +6,28 @@ import "C"
 
 import (
 	"unsafe"
+	"os"
+	"io/ioutil"
 )
 
 type Image struct {
 	wand *C.MagickWand
 }
 
-func Open(file string) *Image {
-	img := &Image{wand: C.NewMagickWand()}
-	C.MagickReadImage(img.wand, C.CString(file))
+func Open(filename string) (img *Image, err error) {
+	img = &Image{wand: C.NewMagickWand()}
+	var file *os.File
+	if file, err = os.Open(filename); err != nil {
+		return nil, err
+	}
+	var data []byte
+	if data, err = ioutil.ReadAll(file); err != nil {
+		return nil, err
+	}
 
-	return img
+	C.MagickReadImageBlob(img.wand, (*C.uchar)(unsafe.Pointer(&data[0])), C.size_t(len(data)))
+
+	return img, nil
 }
 
 func (img *Image) Close() {
