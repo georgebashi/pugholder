@@ -1,22 +1,21 @@
-
 package main
 
 import (
+	"bytes"
+	"code.google.com/p/gorilla/mux"
+	"fmt"
 	"github.com/georgebashi/pugholder/image"
+	"hash/fnv"
+	"log"
 	"net/http"
 	"path/filepath"
-	"log"
 	"sort"
-	"hash/fnv"
-	"code.google.com/p/gorilla/mux"
 	"strconv"
-	"fmt"
 	"time"
-	"bytes"
 )
 
 type handler struct {
-	files []string
+	files      []string
 	start_time time.Time
 }
 
@@ -34,7 +33,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hash := sum([]byte(fmt.Sprintf("%d/%d", width, height)))
-	file := h.files[hash % uint32(len(h.files))]
+	file := h.files[hash%uint32(len(h.files))]
 
 	etag := fmt.Sprintf("\"%x\"", sum([]byte(fmt.Sprintf("%d/%d/%s/%d", width, height, file, h.start_time.Unix()))))
 	none_match := r.Header.Get("If-None-Match")
