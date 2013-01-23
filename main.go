@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"os"
 )
 
 type handler struct {
@@ -104,5 +105,5 @@ func main() {
 		http.ServeFile(w, r, "public/index.html")
 	})
 
-	http.ListenAndServe(":9090", r)
+	http.ListenAndServe(":"+os.Getenv("PORT"), r)
 }
