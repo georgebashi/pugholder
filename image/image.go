@@ -1,6 +1,6 @@
 package image
 
-// #cgo pkg-config: GraphicsMagickWand
+// #cgo pkg-config: MagickWand
 // #include <wand/magick_wand.h>
 import "C"
 
@@ -25,7 +25,7 @@ func Open(filename string) (img *Image, err error) {
 		return nil, err
 	}
 
-	C.MagickReadImageBlob(img.wand, (*C.uchar)(unsafe.Pointer(&data[0])), C.size_t(len(data)))
+	C.MagickReadImageBlob(img.wand, unsafe.Pointer(&data[0]), C.size_t(len(data)))
 
 	return img, nil
 }
@@ -59,10 +59,10 @@ func (img *Image) Resize(width int, height int) {
 	crop_y := int((dest_height - float64(height)) / 2)
 
 	if r_width > 5 && r_height > 5 {
-		C.MagickSampleImage(wand, C.ulong(dest_width*5), C.ulong(dest_height*5))
+		C.MagickSampleImage(wand, C.size_t(dest_width*5), C.size_t(dest_height*5))
 	}
-	C.MagickResizeImage(wand, C.ulong(dest_width), C.ulong(dest_height), C.LanczosFilter, 1)
-	C.MagickCropImage(wand, C.ulong(width), C.ulong(height), C.long(crop_x), C.long(crop_y))
+	C.MagickResizeImage(wand, C.size_t(dest_width), C.size_t(dest_height), C.LanczosFilter, 1)
+	C.MagickCropImage(wand, C.size_t(width), C.size_t(height), C.ssize_t(crop_x), C.ssize_t(crop_y))
 }
 
 func (img *Image) Grayscale() {
@@ -71,7 +71,7 @@ func (img *Image) Grayscale() {
 
 func (img *Image) GetBytes() []byte {
 	size := 0
-	buf := C.MagickWriteImageBlob(img.wand, (*C.size_t)(unsafe.Pointer(&size)))
+	buf := C.MagickGetImageBlob(img.wand, (*C.size_t)(unsafe.Pointer(&size)))
 	defer C.MagickRelinquishMemory(unsafe.Pointer(buf))
 
 	return C.GoBytes(unsafe.Pointer(buf), C.int(size))
