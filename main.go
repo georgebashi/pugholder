@@ -31,6 +31,13 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		width, _ = strconv.Atoi(vars["width"])
 		height, _ = strconv.Atoi(vars["height"])
 	}
+	if width > 2048 {
+		width = 2048
+	}
+	if height > 2048 {
+		height = 2048
+	}
+
 
 	hash := sum([]byte(fmt.Sprintf("%d/%d", width, height)))
 	file := h.files[hash%uint32(len(h.files))]
